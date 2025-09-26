@@ -1,34 +1,108 @@
-// Sidebar toggle for mobile
-const sidebar = document.getElementById('sidebar');
-const sidebarToggleBtn = document.getElementById('sidebarToggle');
-const mobileSidebarToggleBtn = document.getElementById('mobileSidebarToggle');
+// Sidebar toggle for mobile - robust binding after DOM ready
+function openSidebar(sidebar, backdrop) {
+    sidebar.classList.add('active');
+    sidebar.style.transition = 'transform 280ms ease, width 280ms ease, opacity 200ms ease';
+    sidebar.style.transform = 'translateX(0)';
+    sidebar.style.width = '280px';
+    sidebar.style.opacity = '1';
+    if (backdrop && window.innerWidth <= 1024) backdrop.classList.add('show');
+}
+
+function closeSidebar(sidebar, backdrop) {
+    sidebar.classList.remove('active');
+    sidebar.style.transition = 'transform 220ms ease, width 220ms ease, opacity 180ms ease';
+    sidebar.style.transform = 'translateX(-100%)';
+    sidebar.style.width = '0';
+    sidebar.style.opacity = '0';
+    if (backdrop) backdrop.classList.remove('show');
+}
 
 function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    console.log('toggleSidebar called. sidebar element?', !!sidebar);
     if (!sidebar) return;
     const willActivate = !sidebar.classList.contains('active');
-    sidebar.classList.toggle('active');
+    console.log('Sidebar willActivate:', willActivate, 'current classes:', sidebar.className);
 
-    // Backdrop for mobile
+    // Ensure backdrop exists
     let backdrop = document.getElementById('sidebarBackdrop');
     if (!backdrop) {
         backdrop = document.createElement('div');
         backdrop.id = 'sidebarBackdrop';
         backdrop.className = 'sidebar-backdrop';
         backdrop.addEventListener('click', () => {
-            sidebar.classList.remove('active');
-            backdrop.classList.remove('show');
+            const sb = document.getElementById('sidebar');
+            if (sb) closeSidebar(sb, backdrop);
         });
         document.body.appendChild(backdrop);
     }
-    if (willActivate && window.innerWidth <= 1024) {
-        backdrop.classList.add('show');
+
+    if (willActivate) {
+        openSidebar(sidebar, backdrop);
     } else {
-        backdrop.classList.remove('show');
+        closeSidebar(sidebar, backdrop);
     }
 }
 
-sidebarToggleBtn?.addEventListener('click', toggleSidebar);
-mobileSidebarToggleBtn?.addEventListener('click', toggleSidebar);
+function attachSidebarListeners() {
+    const sidebarToggleBtn = document.getElementById('sidebarToggle');
+    const mobileSidebarToggleBtn = document.getElementById('mobileSidebarToggle');
+    if (sidebarToggleBtn) sidebarToggleBtn.addEventListener('click', toggleSidebar);
+    if (mobileSidebarToggleBtn) mobileSidebarToggleBtn.addEventListener('click', toggleSidebar);
+
+    // Delegated handler as fallback if elements get replaced dynamically
+    document.addEventListener('click', function delegatedSidebarHandler(e) {
+        const btn = e.target.closest('#sidebarToggle, #mobileSidebarToggle, .sidebar-toggle, .btn-link#mobileSidebarToggle, .sidebar-toggle i');
+        if (btn) {
+            try { e.preventDefault(); } catch(_) {}
+            toggleSidebar();
+            return;
+        }
+
+        // Close sidebar when clicking outside of it
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('sidebarBackdrop');
+        if (sidebar && sidebar.classList.contains('active')) {
+            const insideSidebar = e.target.closest('.sidebar');
+            const clickedToggle = e.target.closest('#sidebarToggle, #mobileSidebarToggle');
+            if (!insideSidebar && !clickedToggle) {
+                closeSidebar(sidebar, backdrop);
+            }
+        }
+    });
+}
+
+// Ensure listeners are attached after DOMContentLoaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attachSidebarListeners);
+} else {
+    attachSidebarListeners();
+}
+
+function attachSidebarListeners() {
+    const sidebarToggleBtn = document.getElementById('sidebarToggle');
+    const mobileSidebarToggleBtn = document.getElementById('mobileSidebarToggle');
+    if (sidebarToggleBtn) sidebarToggleBtn.addEventListener('click', toggleSidebar);
+    if (mobileSidebarToggleBtn) mobileSidebarToggleBtn.addEventListener('click', toggleSidebar);
+
+    // Delegated handler as fallback if elements get replaced dynamically
+    document.addEventListener('click', function delegatedSidebarHandler(e) {
+        const btn = e.target.closest('#sidebarToggle, #mobileSidebarToggle, .sidebar-toggle, .btn-link#mobileSidebarToggle, .sidebar-toggle i');
+        if (btn) {
+            try {
+                e.preventDefault();
+            } catch (_) {}
+            toggleSidebar();
+        }
+    });
+}
+
+// Ensure listeners are attached after DOMContentLoaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attachSidebarListeners);
+} else {
+    attachSidebarListeners();
+}
 
 // Submenu toggle - aplicado após DOM carregar
 function initializeSubmenuToggles() {
@@ -158,11 +232,17 @@ function initializeNavigation() {
             activateSection(targetId);
             window.location.hash = targetId;
 
-            // Close sidebar on mobile after navigation
-            if (window.innerWidth <= 1024 && sidebar && sidebar.classList.contains('active')) {
-                sidebar.classList.remove('active');
-                const backdrop = document.getElementById('sidebarBackdrop');
-                if (backdrop) backdrop.classList.remove('show');
+            // Always close sidebar after navigation (mobile and desktop small screens)
+            const sb = document.getElementById('sidebar');
+            const bd = document.getElementById('sidebarBackdrop');
+            if (sb && sb.classList.contains('active')) {
+                try {
+                    closeSidebar(sb, bd);
+                } catch (err) {
+                    // Fallback: remove classes/styles
+                    sb.classList.remove('active');
+                    if (bd) bd.classList.remove('show');
+                }
             }
         });
     });
@@ -681,7 +761,7 @@ async function updateChamadoStatus(chamadoId, novoStatus) {
             if (ch) ch.historico = data.historico;
         }
 
-        // Se o status foi atualizado com sucesso e é um dos status que requer notificação
+        // Se o status foi atualizado com sucesso e é um dos status que requer notifica��ão
         if (['Aguardando', 'Cancelado', 'Concluido'].includes(novoStatus)) {
             // Envia a notificação
             const notificacaoResponse = await fetch(`/ti/painel/api/chamados/${chamadoId}/notificar`, {
@@ -1361,7 +1441,7 @@ document.getElementById('btnGerarSenha')?.addEventListener('click', function(e) 
     gerarSenha();
 });
 
-// Funç��o para validar dados do usuário
+// Funç���o para validar dados do usuário
 function validarDadosUsuario(dados) {
     const erros = [];
     
@@ -2521,7 +2601,7 @@ function inicializarSistemaPainel() {
             return;
         }
 
-        // 2. Inicializar navegação
+        // 2. Inicializar navegaç��o
         initializeSubmenuToggles();
         initializeNavigation();
 
@@ -2784,7 +2864,7 @@ document.querySelectorAll('.modal').forEach(modal => {
     });
 });
 
-// Configuração do Socket.IO
+// Configuraç��o do Socket.IO
 let socket = null;
 let painelSocketInitialized = false;
 

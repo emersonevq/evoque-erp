@@ -1993,24 +1993,26 @@ select option:checked {
   position: fixed;
   top: var(--spacing-sm);
   left: var(--spacing-sm);
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  background: transparent;
+  color: var(--light-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
   display: none;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 1200;
-  box-shadow: 0 2px 10px rgba(255, 98, 0, 0.3);
+  box-shadow: 0 2px 8px var(--shadow-color);
   transition: all var(--transition-speed) ease;
-  font-size: var(--font-size-small);
+  font-size: var(--font-size-base);
 }
 
 .sidebar-toggle:hover {
-  transform: scale(1.05);
+  background: rgba(255, 98, 0, 0.08);
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
 }
 
 /* ============ SEÇÃO: PAGINAÇÃO ============ */
@@ -2064,9 +2066,38 @@ select option:checked {
   bottom: 0;
   background: rgba(0,0,0,0.45);
   z-index: 1140;
-  display: none;
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
 }
-.sidebar-backdrop.show { display: block; }
+.sidebar-backdrop.show {
+  opacity: 0.6;
+  pointer-events: auto;
+}
+
+/* Sidebar base improvements */
+.sidebar {
+  background: var(--sidebar-bg);
+  box-shadow: 4px 0 20px rgba(0,0,0,0.45);
+  opacity: 1;
+}
+
+/* Submenu collapse animation */
+.sidebar nav ul .submenu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 260ms ease, opacity 220ms ease, padding 200ms ease;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.sidebar nav ul li.has-submenu.open .submenu {
+  max-height: 1000px; /* suficiente para conter itens */
+  opacity: 1;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
 
 /* ============ SEÇÃO: RESPONSIVIDADE ============ */
 @media (max-width: 1200px) {
@@ -2087,10 +2118,18 @@ select option:checked {
   .sidebar {
     transform: translateX(-100%);
     z-index: 1150;
+    /* Garantir largura mínima no mobile para que o menu fique visível quando aberto */
+    width: 0; /* manter 0 por padrão para não empurrar layout */
+    min-width: 0;
   }
-  
+
   .sidebar.active {
     transform: translateX(0);
+    /* Ao abrir no mobile, forçamos largura visível e overflow para exibir o conteúdo */
+    width: 280px;
+    min-width: 240px;
+    max-width: 90vw;
+    overflow-y: auto;
   }
   
   .main-content {
@@ -2214,6 +2253,15 @@ select option:checked {
   
   .collapsible-content {
     padding: 1rem;
+  }
+  /* Garantir que as seções ocupem toda a tela no mobile */
+  .content-section {
+    min-height: calc(100vh - var(--navbar-height) - var(--spacing-md) * 2);
+    width: 100%;
+  }
+  .main-content {
+    min-height: 100vh;
+    width: 100vw;
   }
 }
 
